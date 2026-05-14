@@ -1,45 +1,48 @@
-# MNIST Neural Network Lab
+# MNIST Neural Network Project Lab
 
-This project is a learning-focused implementation of a simple neural network in C for classifying handwritten digits from the MNIST dataset.
+This project is my implementation of a simple neural network in C for classifying handwritten digits from the MNIST dataset.
 
-The goal of this project is not to build a production-ready machine learning library. Instead, it is meant to function as a lab for understanding the core ideas behind neural networks by implementing each major step manually.
+I built this project as a learning lab, not as a polished machine learning tool. The main goal was to understand what is happening inside a basic neural network by writing the important parts myself instead of relying on a machine learning library.
 
-The network uses:
+The network has:
 
 - One input layer
 - One hidden layer
 - One output layer
 
-The model reads MNIST image and label files, trains on the training set, and evaluates its accuracy on the test set.
+The model trains on the MNIST training set and then tests its accuracy on the MNIST test set.
 
 ---
 
-## Purpose
+## Project Goal
 
-This project was built to study how a neural network learns.
+The purpose of this project was to learn how a neural network works at a lower level.
 
-Rather than using a machine learning framework, the network is written directly in C so that the important parts are visible:
+Instead of using a framework like TensorFlow or PyTorch, I implemented the network logic directly in C. This helped me see the steps that are usually hidden inside machine learning libraries.
 
-- How image data becomes numeric input
-- How weights and biases are initialized
-- How a forward pass produces a prediction
-- How activation functions affect learning
-- How loss measures error
-- How backpropagation updates weights
-- How accuracy changes over training
+Through this project, I practiced:
 
-This makes the project more of a lab experiment than a tool.
+- Loading raw MNIST data from files
+- Converting image pixels into numeric input values
+- Initializing weights and biases
+- Running a forward pass
+- Applying activation functions
+- Calculating loss
+- Using backpropagation to update weights
+- Measuring training and testing accuracy
+
+The project helped me understand that neural networks are built from a series of mathematical steps rather than being a black box.
 
 ---
 
-## What the Network Learns From
+## Dataset
 
-The project uses the MNIST dataset, which contains images of handwritten digits from `0` to `9`.
+This project uses the MNIST dataset, which contains images of handwritten digits from `0` to `9`.
 
-Each image is:
+Each image is 28 pixels wide and 28 pixels tall.
 
 ```text
-28 pixels × 28 pixels = 784 input values
+28 * 28 = 784 input values
 ```
 
 Each pixel is converted into a floating-point value between `0.0` and `1.0`.
@@ -48,13 +51,21 @@ Each pixel is converted into a floating-point value between `0.0` and `1.0`.
 input[i] = pixels[i] / 255.0f;
 ```
 
-This means the network does not see an image the way a person does. It sees a long array of 784 numbers.
+This normalization step makes the data easier for the neural network to work with.
+
+The network does not process the image visually like a person would. Instead, each image is flattened into an array of 784 numbers.
 
 ---
 
 ## Network Architecture
 
-The network is defined in `nn.h`.
+The neural network uses a simple feedforward structure:
+
+```text
+Input Layer -> Hidden Layer -> Output Layer
+```
+
+The architecture is:
 
 ```text
 Input Layer:   784 values
@@ -62,110 +73,137 @@ Hidden Layer:  128 neurons
 Output Layer:  10 values
 ```
 
-The output layer has 10 values because there are 10 possible digit classes:
+The input layer represents the 784 pixels in each image.
+
+The hidden layer is where the network begins learning patterns in the input data.
+
+The output layer has 10 values, one for each possible digit:
 
 ```text
 0, 1, 2, 3, 4, 5, 6, 7, 8, 9
 ```
 
-The output with the highest value is treated as the network's prediction.
+The digit with the highest output value is treated as the network's prediction.
 
 ---
 
-## Learning Concepts in This Project
+## What I Implemented
 
-### 1. Input Representation
+### MNIST Data Loading
 
-The MNIST image starts as pixels, but the neural network needs numbers.
+I wrote helper functions to read the MNIST image and label files.
 
-A 28x28 image is flattened into a one-dimensional array:
+The dataset is stored in a binary format, so part of the project involved understanding how to:
+
+- Open binary files
+- Read header information
+- Read image data
+- Read label data
+- Store the dataset in memory
+
+This was important because the network cannot train until the raw dataset is converted into a usable format.
+
+---
+
+### Forward Propagation
+
+I implemented the forward pass, which moves one image through the network.
+
+The general flow is:
 
 ```text
-[784 pixel values]
+Input values
+-> Hidden layer weighted sums
+-> ReLU activation
+-> Output layer weighted sums
+-> Softmax
+-> Prediction
 ```
 
-This is the input layer.
+This helped me understand how the network turns raw pixel values into a prediction.
 
 ---
 
-### 2. Weights and Biases
+### ReLU Activation
 
-The network stores weights and biases in the `NeuralNetwork` struct:
-
-```c
-float w1[HIDDEN_SIZE][INPUT_SIZE];
-float b1[HIDDEN_SIZE];
-
-float w2[OUTPUT_SIZE][HIDDEN_SIZE];
-float b2[OUTPUT_SIZE];
-```
-
-The weights decide how strongly one layer connects to the next. The biases allow each neuron to shift its output.
-
-At the beginning, weights are initialized randomly. The network starts without knowledge and improves only through training.
-
----
-
-### 3. Forward Pass
-
-The forward pass moves data through the network:
-
-```text
-input -> hidden layer -> output layer -> prediction
-```
-
-The hidden layer uses ReLU:
+The hidden layer uses ReLU as its activation function.
 
 ```c
 relu(x) = max(0, x)
 ```
 
-The output layer uses softmax, which converts raw output values into probability-like values.
+ReLU allows the network to model more complex patterns by introducing nonlinearity. Without an activation function, the network would mostly behave like a linear equation, even with multiple layers.
 
 ---
 
-### 4. Loss
+### Softmax Output
 
-The network uses cross-entropy loss:
+The output layer uses softmax.
 
-```c
-loss = -log(output[label])
+Softmax converts the raw output values into probability-like values.
+
+For example, the network might output something like:
+
+```text
+Digit 0: 0.01
+Digit 1: 0.03
+Digit 2: 0.02
+Digit 3: 0.88
+Digit 4: 0.01
+Digit 5: 0.02
+Digit 6: 0.00
+Digit 7: 0.01
+Digit 8: 0.01
+Digit 9: 0.01
 ```
 
-The loss is high when the network is confident but wrong. The loss is low when the network gives a high score to the correct digit.
-
-Training tries to make this loss smaller over time.
+In this example, the network would predict `3` because it has the highest value.
 
 ---
 
-### 5. Backpropagation
+### Loss Calculation
 
-Backpropagation calculates how much each weight contributed to the error.
+I used cross-entropy loss to measure how wrong the network was.
 
-The project manually computes:
+The loss is based on how much confidence the network gave to the correct answer.
 
-- Error at the output layer
-- Error passed backward into the hidden layer
-- Weight updates for the hidden-to-output layer
-- Weight updates for the input-to-hidden layer
+If the correct digit is `3`, then the model should give a high output value to index `3`.
 
-This is the main learning step of the project.
+A high loss means the network made a poor prediction. A lower loss means the network is improving.
 
 ---
 
-### 6. Training
+### Backpropagation
 
-Training happens one sample at a time.
+Backpropagation was the most important learning part of this project.
 
-For each image:
+I implemented the process of calculating how much each weight contributed to the final error, then updating the weights to reduce that error.
 
-1. The image is read from the MNIST file.
-2. The network makes a prediction.
-3. The loss is calculated.
-4. Backpropagation updates the weights.
-5. The next image is processed.
+The project updates:
 
-After each epoch, the program prints the average loss and training accuracy.
+- Hidden-to-output weights
+- Output biases
+- Input-to-hidden weights
+- Hidden biases
+
+This helped me understand that training is not just guessing. The network improves by using the error to make small adjustments to its weights.
+
+---
+
+### Training Loop
+
+The training loop processes the dataset over multiple epochs.
+
+For each training example, the program:
+
+1. Converts the image into input values
+2. Runs a forward pass
+3. Calculates the loss
+4. Runs backpropagation
+5. Updates the weights and biases
+6. Tracks accuracy
+
+After each epoch, the program prints the loss and accuracy so I can see whether the network is learning.
 
 Example output:
 
@@ -176,7 +214,7 @@ epoch 2/15 - loss 0.4218 - accuracy 87.11%
 test accuracy 91.45%
 ```
 
-The exact accuracy may be different each time because the weights are randomly initialized.
+The exact values can change because the weights are initialized randomly.
 
 ---
 
@@ -186,31 +224,31 @@ The exact accuracy may be different each time because the weights are randomly i
 main.c
 ```
 
-Runs the full experiment. It loads the dataset, initializes the network, trains it, evaluates it, and prints test accuracy.
+Contains the main program. It loads the data, initializes the network, trains the model, evaluates it, and prints the results.
 
 ```text
 nn.h
 ```
 
-Contains the neural network structure and learning logic, including forward propagation, softmax, loss, prediction, training, and evaluation.
+Contains the neural network structure and the main learning logic, including forward propagation, prediction, loss, training, and evaluation.
 
 ```text
 mnist_loader.c
 ```
 
-Reads MNIST image and label files from disk.
+Contains the functions that read the MNIST image and label files.
 
 ```text
 mnist_loader.h
 ```
 
-Defines the MNIST dataset structure and loader functions.
+Defines the dataset structure and function declarations for loading and freeing MNIST data.
 
 ---
 
 ## Expected Dataset Layout
 
-The program expects the MNIST files to be inside an `images/` directory:
+The program expects the MNIST files to be stored in an `images/` directory.
 
 ```text
 images/
@@ -226,33 +264,33 @@ These are the raw MNIST files, not PNG or JPG images.
 
 ## Building the Project
 
-Compile with:
+Compile the program with:
 
 ```bash
 gcc main.c mnist_loader.c -o mnist_lab -lm
 ```
 
-The `-lm` flag links the math library, which is needed for functions like `expf()` and `logf()`.
+The `-lm` flag links the math library, which is needed for functions such as `expf()` and `logf()`.
 
 ---
 
-## Running the Lab
+## Running the Project
 
-After compiling, run:
+Run the compiled program with:
 
 ```bash
 ./mnist_lab
 ```
 
-The program will train the neural network and then print the final test accuracy.
+The program trains the network and then prints the final test accuracy.
 
 ---
 
-## Things to Experiment With
+## Experiments I Can Run
 
-This project is useful because small changes can show how neural networks behave.
+One useful part of this project is that I can change a few values and observe how the network behaves.
 
-Try changing these values in `nn.h`:
+For example, I can experiment with:
 
 ```c
 #define HIDDEN_SIZE 128
@@ -260,11 +298,11 @@ Try changing these values in `nn.h`:
 #define EPOCHS 15
 ```
 
-### Possible Experiments
+### Hidden Layer Size
 
-#### Change the Hidden Layer Size
+Changing the hidden layer size lets me test how model capacity affects learning.
 
-Try:
+Examples:
 
 ```c
 #define HIDDEN_SIZE 32
@@ -272,17 +310,19 @@ Try:
 #define HIDDEN_SIZE 256
 ```
 
-Questions to observe:
+Questions I can explore:
 
-- Does a larger hidden layer learn faster?
-- Does it improve test accuracy?
-- Does it take longer to train?
+- Does a larger hidden layer improve accuracy?
+- Does it make training slower?
+- Is there a point where adding more neurons does not help much?
 
 ---
 
-#### Change the Learning Rate
+### Learning Rate
 
-Try:
+Changing the learning rate lets me see how step size affects training.
+
+Examples:
 
 ```c
 #define LEARNING_RATE 0.1f
@@ -290,17 +330,19 @@ Try:
 #define LEARNING_RATE 0.001f
 ```
 
-Questions to observe:
+Questions I can explore:
 
-- What happens if the learning rate is too high?
-- What happens if it is too low?
-- Does the loss decrease smoothly?
+- Does a high learning rate make training unstable?
+- Does a low learning rate make learning too slow?
+- Which value gives the smoothest loss decrease?
 
 ---
 
-#### Change the Number of Epochs
+### Number of Epochs
 
-Try:
+Changing the number of epochs lets me see how repeated training affects accuracy.
+
+Examples:
 
 ```c
 #define EPOCHS 1
@@ -308,17 +350,47 @@ Try:
 #define EPOCHS 30
 ```
 
-Questions to observe:
+Questions I can explore:
 
-- Does accuracy improve every epoch?
-- Does it stop improving after a while?
-- Can the model overfit?
+- Does accuracy improve after every epoch?
+- Does the model eventually stop improving?
+- Does the training accuracy increase faster than test accuracy?
 
 ---
 
-## What This Project Does Not Do
+## What I Learned
 
-This project keeps the neural network intentionally simple.
+This project helped me understand the basic structure of a neural network.
+
+The biggest takeaway is that a neural network is a sequence of connected mathematical operations:
+
+```text
+Input data
+-> Weights and biases
+-> Activation functions
+-> Output values
+-> Loss
+-> Gradients
+-> Weight updates
+```
+
+By implementing these steps myself, I got a clearer understanding of how training works.
+
+I also learned that machine learning depends heavily on small design choices, such as:
+
+- How weights are initialized
+- Which activation function is used
+- How large the hidden layer is
+- What learning rate is chosen
+- How many epochs the model trains for
+
+Even though this network is simple, it demonstrates the core learning process used in larger neural networks.
+
+---
+
+## What This Project Does Not Include
+
+This project intentionally keeps the network simple.
 
 It does not include:
 
@@ -326,26 +398,17 @@ It does not include:
 - Convolutional layers
 - Mini-batch training
 - Model saving or loading
+- Advanced optimizers
 - External machine learning libraries
-- Optimizers like Adam or RMSProp
 
-These are all useful features, but leaving them out makes the basic learning process easier to understand.
+Leaving these features out made it easier to focus on the fundamentals.
 
 ---
 
-## Main Takeaway
+## Conclusion
 
-This project shows that a neural network is not magic.
+This project was a hands-on lab for understanding neural networks by building one from scratch in C.
 
-At its core, it is a sequence of numeric steps:
+It showed me how a model can start with random weights and gradually improve through training. More importantly, it helped me understand the individual steps behind that learning process.
 
-```text
-input values
--> weighted sums
--> activation functions
--> output probabilities
--> loss
--> gradient updates
-```
-
-By implementing these steps manually, this lab helps explain what a neural network is actually doing when it learns.
+The final result is not just a digit classifier. It is a working demonstration of forward propagation, loss calculation, backpropagation, and gradient-based learning.
