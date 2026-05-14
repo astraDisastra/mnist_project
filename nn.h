@@ -10,7 +10,7 @@
 #define OUTPUT_SIZE 10
 
 #define LEARNING_RATE 0.01f
-#define EPOCHS 10
+#define EPOCHS 15
 
 #include "mnist_loader.h"
 
