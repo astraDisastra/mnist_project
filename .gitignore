@@ -1,0 +1,14 @@
+# venv
+
+venv/
+.venv/
+env/
+
+#py cache
+
+__pycache__/
+*.pyc
+
+#environment variables
+
+.env
